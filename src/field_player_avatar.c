@@ -513,22 +513,41 @@ static void PlayerNotOnBikeMoving(u8 direction, u16 heldKeys)
         return;
     }
 
-    if ((heldKeys & B_BUTTON) && FlagGet(FLAG_SYS_B_DASH)
-        && !IsRunningDisallowed(gObjectEvents[gPlayerAvatar.objectEventId].currentMetatileBehavior))
+    // Auto Run
+    if (FlagGet(FLAG_SYS_B_DASH))
     {
-        if (PlayerIsMovingOnRockStairs(direction))
-            PlayerRunSlow(direction);
-        else
+        if (heldKeys & B_BUTTON)
+        {
+            if (PlayerIsMovingOnRockStairs(direction))
+                PlayerRunSlow(direction);
+            else
+            {
+                PlayerWalkNormal(direction);
+            }
+            return;
+        }
+        else if (PlayerIsMovingOnRockStairs(direction))
+            PlayerWalkSlow(direction);
+        else if (!IsRunningDisallowed(gObjectEvents[gPlayerAvatar.objectEventId].currentMetatileBehavior))
+        {
             PlayerRun(direction);
-        gPlayerAvatar.flags |= PLAYER_AVATAR_FLAG_DASH;
-        return;
+            gPlayerAvatar.flags |= PLAYER_AVATAR_FLAG_DASH;
+        }
+        else
+        {
+           PlayerWalkNormal(direction); 
+        }
+        return; 
     }
     else
     {
         if (PlayerIsMovingOnRockStairs(direction))
-            PlayerWalkSlow(direction);
+            PlayerRunSlow(direction);
         else
-            PlayerWalkNormal(direction);
+        {
+             PlayerWalkNormal(direction);
+        }
+        return;  
     }
 }
 

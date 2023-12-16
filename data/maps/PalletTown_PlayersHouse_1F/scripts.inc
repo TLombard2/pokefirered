@@ -6,6 +6,7 @@ PalletTown_PlayersHouse_1F_MapScripts::
 PalletTown_PlayersHouse_1F_EventScript_Mom::
 	lock
 	faceplayer
+	goto_if_eq VAR_MAP_SCENE_PALLET_TOWN_PLAYERS_HOUSE_1F, 0, PalletTown_PlayersHouse_1F_EventScript_RunningShoes
 	goto_if_set FLAG_BEAT_RIVAL_IN_OAKS_LAB, PalletTown_PlayersHouse_1F_EventScript_MomHeal
 	checkplayergender
 	call_if_eq VAR_RESULT, MALE, PalletTown_PlayersHouse_1F_EventScript_MomOakLookingForYouMale
@@ -53,4 +54,36 @@ PalletTown_PlayersHouse_1F_EventScript_TVScreenMale::
 
 PalletTown_PlayersHouse_1F_EventScript_TVScreenFemale::
 	msgbox PalletTown_PlayersHouse_1F_Text_MovieOnTVGirlOnBrickRoad
+	return
+
+PalletTown_PlayersHouse_1F_EventScript_RunningShoes::
+	playse SE_PIN
+	applymovement LOCALID_MOM, Common_Movement_ExclamationMark
+	waitmovement 0
+	applymovement LOCALID_MOM, Common_Movement_Delay48
+	waitmovement 0
+	msgbox PalletTown_PlayersHouse_1F_Text_TakeShoes
+	playfanfare MUS_OBTAIN_KEY_ITEM
+	message PalletTown_PlayersHouse_1F_Text_ReceivedRunningShoes
+	waitmessage
+	waitfanfare
+	signmsg
+	msgbox PalletTown_PlayersHouse_1F_Text_ExplainRunningShoes
+	normalmsg
+	closemessage
+	setflag FLAG_SYS_B_DASH
+	setvar VAR_MAP_SCENE_PALLET_TOWN_PLAYERS_HOUSE_1F, 1
+	return
+
+PalletTown_PlayersHouse_1F_EventScript_RunningShoesReminder::
+	lock
+	faceplayer
+	playse SE_PIN
+	applymovement LOCALID_MOM, Common_Movement_ExclamationMark
+	waitmovement 0
+	applymovement LOCALID_MOM, Common_Movement_Delay48
+	waitmovement 0
+	msgbox PalletTown_PlayersHouse_1F_Text_RunningShoesReminder
+	closemessage
+	release
 	return
