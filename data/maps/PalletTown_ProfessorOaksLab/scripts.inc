@@ -667,6 +667,7 @@ PalletTown_ProfessorOaksLab_EventScript_ReceiveDexScene::
 	msgbox PalletTown_ProfessorOaksLab_Text_OakCatchMonsForDataTakeThese
 	giveitem_msg PalletTown_ProfessorOaksLab_Text_ReceivedFivePokeBalls, ITEM_POKE_BALL, 5
 	msgbox PalletTown_ProfessorOaksLab_Text_OakExplainCatching
+	giveitem ITEM_TEACHY_TV
 	famechecker FAMECHECKER_OAK, 1
 	msgbox PalletTown_ProfessorOaksLab_Text_OakCompleteMonGuideWasMyDream
 	msgbox PalletTown_ProfessorOaksLab_Text_RivalLeaveItToMeGramps
@@ -685,7 +686,7 @@ PalletTown_ProfessorOaksLab_EventScript_ReceiveDexScene::
 	fadedefaultbgm
 	setvar VAR_MAP_SCENE_PALLET_TOWN_PROFESSOR_OAKS_LAB, 6
 	setvar VAR_MAP_SCENE_VIRIDIAN_CITY_MART, 2
-	setvar VAR_MAP_SCENE_VIRIDIAN_CITY_OLD_MAN, 1
+	setvar VAR_MAP_SCENE_VIRIDIAN_CITY_OLD_MAN, 2
 	setvar VAR_MAP_SCENE_PALLET_TOWN_RIVALS_HOUSE, 1
 	setvar VAR_MAP_SCENE_ROUTE22, 1
 	release

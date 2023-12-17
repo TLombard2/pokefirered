@@ -183,6 +183,7 @@ PalletTown_EventScript_OakTriggerRight::
 
 PalletTown_EventScript_OakTrigger::
 	famechecker FAMECHECKER_OAK, FCPICKSTATE_COLORED, UpdatePickStateFromSpecialVar8005
+	setvar VAR_MAP_SCENE_PALLET_TOWN_SIGN_LADY, 2
 	textcolor NPC_TEXT_COLOR_MALE
 	delay 30
 	playbgm MUS_OAK, 0

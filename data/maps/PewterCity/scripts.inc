@@ -18,17 +18,14 @@ PewterCity_EventScript_GymGuide::
 	faceplayer
 	msgbox PewterCity_Text_BrocksLookingForChallengersFollowMe
 	closemessage
-	playbgm MUS_FOLLOW_ME, 0
-	call_if_eq VAR_FACING, DIR_EAST, PewterCity_EventScript_WalkToGymEast
-	msgbox PewterCity_Text_GoTakeOnBrock
-	closemessage
-	applymovement LOCALID_GYM_GUIDE, PewterCity_Movement_GymGuideExit
+	applymovement LOCALID_GYM_GUIDE, PewterCity_Movement_GuideReset
 	waitmovement 0
-	fadedefaultbgm
-	removeobject LOCALID_GYM_GUIDE
-	clearflag FLAG_HIDE_PEWTER_CITY_GYM_GUIDE
 	release
 	end
+
+PewterCity_Movement_GuideReset::
+	walk_in_place_down
+	step_end
 
 PewterCity_EventScript_WalkToGymEast::
 	applymovement OBJ_EVENT_ID_PLAYER, PewterCity_Movement_PlayerWaitForGuideEast
@@ -286,19 +283,14 @@ PewterCity_EventScript_GymGuideTrigger::
 	textcolor NPC_TEXT_COLOR_MALE
 	msgbox PewterCity_Text_BrocksLookingForChallengersFollowMe
 	closemessage
-	playbgm MUS_FOLLOW_ME, 0
-	call_if_eq VAR_TEMP_1, 0, PewterCity_EventScript_WalkToGymTop
-	call_if_eq VAR_TEMP_1, 1, PewterCity_EventScript_WalkToGymMid
-	call_if_eq VAR_TEMP_1, 2, PewterCity_EventScript_WalkToGymBottom
-	msgbox PewterCity_Text_GoTakeOnBrock
-	closemessage
-	applymovement LOCALID_GYM_GUIDE, PewterCity_Movement_GymGuideExit
+	applymovement OBJ_EVENT_ID_PLAYER, PewterCity_Movement_PlayerMoveLeft
 	waitmovement 0
-	fadedefaultbgm
-	removeobject LOCALID_GYM_GUIDE
-	clearflag FLAG_HIDE_PEWTER_CITY_GYM_GUIDE
 	releaseall
 	end
+
+PewterCity_Movement_PlayerMoveLeft::
+	walk_left
+	step_end
 
 PewterCity_EventScript_WalkToGymTop::
 	applymovement LOCALID_GYM_GUIDE, PewterCity_Movement_GuideMoveToLeadTop
