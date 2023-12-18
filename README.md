@@ -16,5 +16,6 @@ CHANGELOG
 - Gen 6 Matsuda Method applied globally (6/4096 Shiny Odds or ~1/683)
 - TMs have infinite use & can no longer be sold
 - Move tutors no longer limited to teaching a move once
+- Default text speed is "FAST" & text is automatically sped up as though pressing A or B
 
 Source: [pret.github.io](https://pret.github.io/).
