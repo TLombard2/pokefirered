@@ -11,7 +11,9 @@ CHANGELOG
   - Sign Girl
   - TeachyTV Guy (TeachyTV item now received from Oak)
   - Pewter City Gym Guide (No longer guides you to the gym)
-- Stats page shows nature affected stats in color (Red is boosted, blue is dropped)
+- Pokemon summary page shows stats affected by nature in color (Red is boosted, blue is dropped)
 - Flame Body & Magma Armor abilities cut egg step counter in half
+- Gen 6 Matsuda Method applied globally (6/4096 Shiny Odds or ~1/683)
+- TMs have infinite use & can no longer be sold
 
 Source: [pret.github.io](https://pret.github.io/).
