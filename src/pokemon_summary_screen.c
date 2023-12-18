@@ -908,12 +908,20 @@ static const struct WindowTemplate sWindowTemplates_Dummy[] =
 
 static const u8 sLevelNickTextColors[][3] =
 {
-    {0, 14, 10},
+    // NOT RGB - Each value corresponds to a specific part of the character.
+    // The first value is the color of the entire box the character takes up.
+    // The second color is the color of the character.
+    // The third color is the color of the outline of the character.
+    // The numbers correspond to a color. 0 being transparent, 1 = red, 2 = red/orange, 3 = orange, 4 = yellow, 5 = green, 6 = light blue, 7 = blue, 8 = purple, 9 = dark tan, 10 = light tan
+    // 11 = tan/brown, 12 = pink, 13 = grey 14 = black, 15 = white, 16 = yellow/white. Putting a number higher than 16 just loops back through the colors. ie. 17 = red.
+    {0, 14, 10}, // 0, 14, 10
     {0, 1, 2},
     {0, 9, 8},
     {0, 5, 4},
     {0, 2, 3},
     {0, 11, 10},
+    {0, 1, 2}, // Red
+    {0, 7, 6}, // Blue
 };
 
 static const u8 ALIGNED(4) sMultiBattlePartyOrder[] =
@@ -2498,12 +2506,132 @@ static void PrintInfoPage(void)
 
 static void PrintSkillsPage(void)
 {
-    AddTextPrinterParameterized3(sMonSummaryScreen->windowIds[POKESUM_WIN_RIGHT_PANE], FONT_NORMAL, 14 + sMonSkillsPrinterXpos->curHpStr, 4, sLevelNickTextColors[0], TEXT_SKIP_DRAW, sMonSummaryScreen->summary.curHpStrBuf);
-    AddTextPrinterParameterized3(sMonSummaryScreen->windowIds[POKESUM_WIN_RIGHT_PANE], FONT_NORMAL, 50 + sMonSkillsPrinterXpos->atkStr, 22, sLevelNickTextColors[0], TEXT_SKIP_DRAW, sMonSummaryScreen->summary.statValueStrBufs[PSS_STAT_ATK]);
-    AddTextPrinterParameterized3(sMonSummaryScreen->windowIds[POKESUM_WIN_RIGHT_PANE], FONT_NORMAL, 50 + sMonSkillsPrinterXpos->defStr, 35, sLevelNickTextColors[0], TEXT_SKIP_DRAW, sMonSummaryScreen->summary.statValueStrBufs[PSS_STAT_DEF]);
-    AddTextPrinterParameterized3(sMonSummaryScreen->windowIds[POKESUM_WIN_RIGHT_PANE], FONT_NORMAL, 50 + sMonSkillsPrinterXpos->spAStr, 48, sLevelNickTextColors[0], TEXT_SKIP_DRAW, sMonSummaryScreen->summary.statValueStrBufs[PSS_STAT_SPA]);
-    AddTextPrinterParameterized3(sMonSummaryScreen->windowIds[POKESUM_WIN_RIGHT_PANE], FONT_NORMAL, 50 + sMonSkillsPrinterXpos->spDStr, 61, sLevelNickTextColors[0], TEXT_SKIP_DRAW, sMonSummaryScreen->summary.statValueStrBufs[PSS_STAT_SPD]);
-    AddTextPrinterParameterized3(sMonSummaryScreen->windowIds[POKESUM_WIN_RIGHT_PANE], FONT_NORMAL, 50 + sMonSkillsPrinterXpos->speStr, 74, sLevelNickTextColors[0], TEXT_SKIP_DRAW, sMonSummaryScreen->summary.statValueStrBufs[PSS_STAT_SPE]);
+    u8 nature;
+    u8 statBoostTextColor[3];
+    u8 statDropTextColor[3];
+    u8 hpTextColor[3];
+    u8 attackTextColor[3];
+    u8 defenseTextColor[3];
+    u8 spAttackTextColor[3];
+    u8 spDefenseTextColor[3];
+    u8 speedTextColor[3];
+
+    nature = GetNature(&sMonSummaryScreen->currentMon);
+    memcpy(statBoostTextColor, sLevelNickTextColors[6], sizeof(statBoostTextColor));
+    memcpy(statDropTextColor, sLevelNickTextColors[7], sizeof(statDropTextColor));
+    memcpy(hpTextColor, sLevelNickTextColors[0], sizeof(hpTextColor));
+    memcpy(attackTextColor, sLevelNickTextColors[0], sizeof(attackTextColor));
+    memcpy(defenseTextColor, sLevelNickTextColors[0], sizeof(defenseTextColor));
+    memcpy(spAttackTextColor, sLevelNickTextColors[0], sizeof(spAttackTextColor));
+    memcpy(spDefenseTextColor, sLevelNickTextColors[0], sizeof(spDefenseTextColor));
+    memcpy(speedTextColor, sLevelNickTextColors[0], sizeof(speedTextColor));
+
+    switch(nature)
+    {
+    case 0: // Hardy - Neutral
+        // No color changes for "Neutral" nature.
+        break;
+    case 1: // Lonely - +Attack / -Defense
+        memcpy(attackTextColor, statBoostTextColor, sizeof(attackTextColor));
+        memcpy(defenseTextColor, statDropTextColor, sizeof(defenseTextColor));
+        break;
+    case 2: // Brave - +Attack / -Speed
+        memcpy(attackTextColor, statBoostTextColor, sizeof(attackTextColor));
+        memcpy(speedTextColor, statDropTextColor, sizeof(speedTextColor));
+        break;
+    case 3: // Adamant - +Attack / -SpAttack
+        memcpy(attackTextColor, statBoostTextColor, sizeof(attackTextColor));
+        memcpy(spAttackTextColor, statDropTextColor, sizeof(spAttackTextColor));
+        break;
+    case 4: // Naughty - +Attack / -SpDefense
+        memcpy(attackTextColor, statBoostTextColor, sizeof(attackTextColor));
+        memcpy(spDefenseTextColor, statDropTextColor, sizeof(spDefenseTextColor));
+        break;
+    case 5: // Bold - +Defense / -Attack
+        memcpy(defenseTextColor, statBoostTextColor, sizeof(defenseTextColor));
+        memcpy(attackTextColor, statDropTextColor, sizeof(attackTextColor));
+        break;
+    case 6: // Docile - Neutral
+        // No color changes for "Neutral" nature.
+        break;
+    case 7: // Relaxed - +Defense / -Speed
+        memcpy(defenseTextColor, statBoostTextColor, sizeof(defenseTextColor));
+        memcpy(speedTextColor, statDropTextColor, sizeof(speedTextColor));
+        break;
+    case 8: // Impish - +Defense / -SpAttack
+        memcpy(defenseTextColor, statBoostTextColor, sizeof(defenseTextColor));
+        memcpy(spAttackTextColor, statDropTextColor, sizeof(spAttackTextColor));
+        break;
+    case 9: // Lax - +Defense / -SpDefense
+        memcpy(defenseTextColor, statBoostTextColor, sizeof(defenseTextColor));
+        memcpy(spDefenseTextColor, statDropTextColor, sizeof(spDefenseTextColor));
+        break;
+    case 10: // Timid - +Speed / -Attack
+        memcpy(speedTextColor, statBoostTextColor, sizeof(speedTextColor));
+        memcpy(attackTextColor, statDropTextColor, sizeof(attackTextColor));
+        break;
+    case 11: // Hasty - +Speed / -Defense
+        memcpy(speedTextColor, statBoostTextColor, sizeof(speedTextColor));
+        memcpy(defenseTextColor, statDropTextColor, sizeof(defenseTextColor));
+        break;
+    case 12: // Serious - Neutral
+        // No color changes for "Neutral" nature.
+        break;
+    case 13: // Jolly - +Speed / -SpAttack
+        memcpy(speedTextColor, statBoostTextColor, sizeof(speedTextColor));
+        memcpy(spAttackTextColor, statDropTextColor, sizeof(spAttackTextColor));
+        break;
+    case 14: // Naive - +Speed / -SpDefense
+        memcpy(speedTextColor, statBoostTextColor, sizeof(speedTextColor));
+        memcpy(spDefenseTextColor, statDropTextColor, sizeof(spDefenseTextColor));
+        break;
+    case 15: // Modest - +SpAttack / -Attack
+        memcpy(spAttackTextColor, statBoostTextColor, sizeof(spAttackTextColor));
+        memcpy(attackTextColor, statDropTextColor, sizeof(attackTextColor));
+        break;
+    case 16: // Mild - +SpAttack / -Defense
+        memcpy(spAttackTextColor, statBoostTextColor, sizeof(spAttackTextColor));
+        memcpy(defenseTextColor, statDropTextColor, sizeof(defenseTextColor));
+        break;
+    case 17: // Quiet - +SpAttack / -Speed
+        memcpy(spAttackTextColor, statBoostTextColor, sizeof(spAttackTextColor));
+        memcpy(speedTextColor, statDropTextColor, sizeof(speedTextColor));
+        break;
+    case 18: // Bashful - Neutral
+        // No color changes for "Neutral" nature.
+        break;
+    case 19: // Rash - +SpAttack / -SpDefense
+        memcpy(spAttackTextColor, statBoostTextColor, sizeof(spAttackTextColor));
+        memcpy(spDefenseTextColor, statDropTextColor, sizeof(spDefenseTextColor));
+        break;
+    case 20: // Calm - +SpDefense / -Attack
+        memcpy(spDefenseTextColor, statBoostTextColor, sizeof(spDefenseTextColor));
+        memcpy(attackTextColor, statDropTextColor, sizeof(attackTextColor));
+    break;
+    case 21: // Gentle - +SpDefense / -Defense
+        memcpy(spDefenseTextColor, statBoostTextColor, sizeof(spDefenseTextColor));
+        memcpy(defenseTextColor, statDropTextColor, sizeof(defenseTextColor));
+        break;
+    case 22: // Sassy - +SpDefense / -Speed
+        memcpy(spDefenseTextColor, statBoostTextColor, sizeof(spDefenseTextColor));
+        memcpy(speedTextColor, statDropTextColor, sizeof(speedTextColor));
+        break;
+    case 23: // Careful - +SpDefense / -SpAttack
+        memcpy(spDefenseTextColor, statBoostTextColor, sizeof(spDefenseTextColor));
+        memcpy(spAttackTextColor, statDropTextColor, sizeof(spAttackTextColor));
+        break;
+    case 24: // Quirky - Neutral
+        // No color changes for "Neutral" nature.
+        break;
+    }
+
+
+    AddTextPrinterParameterized3(sMonSummaryScreen->windowIds[POKESUM_WIN_RIGHT_PANE], FONT_NORMAL, 14 + sMonSkillsPrinterXpos->curHpStr, 4, hpTextColor, TEXT_SKIP_DRAW, sMonSummaryScreen->summary.curHpStrBuf);
+    AddTextPrinterParameterized3(sMonSummaryScreen->windowIds[POKESUM_WIN_RIGHT_PANE], FONT_NORMAL, 50 + sMonSkillsPrinterXpos->atkStr, 22, attackTextColor, TEXT_SKIP_DRAW, sMonSummaryScreen->summary.statValueStrBufs[PSS_STAT_ATK]);
+    AddTextPrinterParameterized3(sMonSummaryScreen->windowIds[POKESUM_WIN_RIGHT_PANE], FONT_NORMAL, 50 + sMonSkillsPrinterXpos->defStr, 35, defenseTextColor, TEXT_SKIP_DRAW, sMonSummaryScreen->summary.statValueStrBufs[PSS_STAT_DEF]);
+    AddTextPrinterParameterized3(sMonSummaryScreen->windowIds[POKESUM_WIN_RIGHT_PANE], FONT_NORMAL, 50 + sMonSkillsPrinterXpos->spAStr, 48, spAttackTextColor, TEXT_SKIP_DRAW, sMonSummaryScreen->summary.statValueStrBufs[PSS_STAT_SPA]);
+    AddTextPrinterParameterized3(sMonSummaryScreen->windowIds[POKESUM_WIN_RIGHT_PANE], FONT_NORMAL, 50 + sMonSkillsPrinterXpos->spDStr, 61, spDefenseTextColor, TEXT_SKIP_DRAW, sMonSummaryScreen->summary.statValueStrBufs[PSS_STAT_SPD]);
+    AddTextPrinterParameterized3(sMonSummaryScreen->windowIds[POKESUM_WIN_RIGHT_PANE], FONT_NORMAL, 50 + sMonSkillsPrinterXpos->speStr, 74, speedTextColor, TEXT_SKIP_DRAW, sMonSummaryScreen->summary.statValueStrBufs[PSS_STAT_SPE]);
     AddTextPrinterParameterized3(sMonSummaryScreen->windowIds[POKESUM_WIN_RIGHT_PANE], FONT_NORMAL, 15 + sMonSkillsPrinterXpos->expStr, 87, sLevelNickTextColors[0], TEXT_SKIP_DRAW, sMonSummaryScreen->summary.expPointsStrBuf);
     AddTextPrinterParameterized3(sMonSummaryScreen->windowIds[POKESUM_WIN_RIGHT_PANE], FONT_NORMAL, 15 + sMonSkillsPrinterXpos->toNextLevel, 100, sLevelNickTextColors[0], TEXT_SKIP_DRAW, sMonSummaryScreen->summary.expToNextLevelStrBuf);
 }
