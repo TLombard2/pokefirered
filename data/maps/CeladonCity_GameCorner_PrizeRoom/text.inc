@@ -25,6 +25,9 @@ CeladonCity_GameCorner_PrizeRoom_Text_YouWantTM::
     .string "Okay, a TM of {STR_VAR_2}\n"
     .string "is what you want?$"
 
+CeladonCity_GameCorner_PrizeRoom_Text_AlreadyHaveTM::
+    .string "You already have that.$"
+
 CeladonCity_GameCorner_PrizeRoom_Text_NeedMoreCoins::
     .string "Sorry, you'll need more COINS\n"
     .string "than that.$"

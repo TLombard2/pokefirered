@@ -38,6 +38,9 @@
 #define SIGNPOST_SCRIPTED 240
 #define SIGNPOST_NA 255
 
+static EWRAM_DATA u8 initKey = 0;
+static EWRAM_DATA u8 secondKey = 0;
+
 static void QuestLogOverrideJoyVars(struct FieldInput *input, u16 *newKeys, u16 *heldKeys);
 static void Task_QuestLogPlayback_OpenStartMenu(u8 taskId);
 static void GetPlayerPosition(struct MapPosition * position);
@@ -144,14 +147,67 @@ void FieldGetPlayerInput(struct FieldInput *input, u16 newKeys, u16 heldKeys)
 
     if (!QL_IS_PLAYBACK_STATE)
     {
-        if (heldKeys & DPAD_UP)
-            input->dpadDirection = DIR_NORTH;
-        else if (heldKeys & DPAD_DOWN)
-            input->dpadDirection = DIR_SOUTH;
-        else if (heldKeys & DPAD_LEFT)
-            input->dpadDirection = DIR_WEST;
-        else if (heldKeys & DPAD_RIGHT)
-            input->dpadDirection = DIR_EAST;
+        if (initKey != 0)
+        {
+           if (JOY_NEW(DPAD_UP))
+                secondKey = DPAD_UP;
+            if (JOY_NEW(DPAD_DOWN))
+                secondKey = DPAD_DOWN;
+            if (JOY_NEW(DPAD_LEFT))
+                secondKey = DPAD_LEFT;
+            if (JOY_NEW(DPAD_RIGHT))
+                secondKey = DPAD_RIGHT; 
+        }
+
+        if (initKey == 0)
+        {
+            if (JOY_NEW(DPAD_UP))
+                initKey = DPAD_UP;
+            if (JOY_NEW(DPAD_DOWN))
+                initKey = DPAD_DOWN;
+            if (JOY_NEW(DPAD_LEFT))
+                initKey = DPAD_LEFT;
+            if (JOY_NEW(DPAD_RIGHT))
+                initKey = DPAD_RIGHT;
+        }
+
+        if (secondKey != 0 && (heldKeys & secondKey))
+        {
+            if (secondKey == DPAD_UP)
+                input->dpadDirection = DIR_NORTH;
+            if (secondKey == DPAD_DOWN)
+                input->dpadDirection = DIR_SOUTH;
+            if (secondKey == DPAD_LEFT)
+                input->dpadDirection = DIR_WEST;
+            if (secondKey == DPAD_RIGHT)
+                input->dpadDirection = DIR_EAST;
+        }
+        else if (initKey != 0 && (heldKeys & initKey))
+        {
+            if (initKey == DPAD_UP)
+                input->dpadDirection = DIR_NORTH;
+            if (initKey == DPAD_DOWN)
+                input->dpadDirection = DIR_SOUTH;
+            if (initKey == DPAD_LEFT)
+                input->dpadDirection = DIR_WEST;
+            if (initKey == DPAD_RIGHT)
+                input->dpadDirection = DIR_EAST;
+        }
+
+        if (!(heldKeys & initKey))
+        {
+            if (secondKey != 0)
+            {
+                initKey = secondKey;
+                secondKey = 0;
+            }
+            else
+                initKey = 0;
+        }
+        if (!(heldKeys & secondKey))
+        {
+            secondKey = 0;
+        }
     }
 }
 

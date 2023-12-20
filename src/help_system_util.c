@@ -43,7 +43,7 @@ u8 RunHelpSystemCallback(void)
 
     switch (sVideoState.state)
     {
-    case 0:
+    /*case 0:
         sInHelpSystem = 0;
         if (gSaveBlock2Ptr->optionsButtonMode != OPTIONS_BUTTON_MODE_HELP)
             return 0;
@@ -65,7 +65,7 @@ u8 RunHelpSystemCallback(void)
             sInHelpSystem = 1;
             sVideoState.state = 1;
         }
-        break;
+        break;*/
     case 1:
         SaveMapTiles();
         SaveMapGPURegs();

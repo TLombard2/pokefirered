@@ -36,3 +36,18 @@ PalletTown_PlayersHouse_1F_Text_MovieOnTVGirlOnBrickRoad::
 PalletTown_PlayersHouse_1F_Text_OopsWrongSide::
     .string "Oops, wrong side…$"
 
+PalletTown_PlayersHouse_1F_Text_TakeShoes::
+    .string "Your shoes got delivered!$"
+
+PalletTown_PlayersHouse_1F_Text_ReceivedRunningShoes::
+    .string "{PLAYER} received the\n"
+    .string "RUNNING SHOES from MOM.$"
+
+PalletTown_PlayersHouse_1F_Text_RunningShoesReminder::
+    .string "Come get your new shoes before\n"
+    .string "you go!$"
+
+PalletTown_PlayersHouse_1F_Text_ExplainRunningShoes::
+    .string "You will now automatically run!\n"
+    .string "Press B to walk.$"
+
