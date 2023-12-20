@@ -88,7 +88,7 @@ static void CommitStaticWindowTilemaps(void);
 static void PokeSum_Setup_SetVBlankCallback(void);
 static void PokeSum_FinishSetup(void);
 static void BufferMonInfo(void);
-static void BufferMonSkills(void);
+static void BufferMonSkills(u8 page);
 static void BufferMonMoves(void);
 static u8 StatusToAilment(u32 status);
 static void BufferMonMoveI(u8);
@@ -326,6 +326,7 @@ static EWRAM_DATA u8 sLastViewedMonIndex = 0;
 static EWRAM_DATA u8 sMoveSelectionCursorPos = 0;
 static EWRAM_DATA u8 sMoveSwapCursorPos = 0;
 static EWRAM_DATA struct MonPicBounceState * sMonPicBounceState = NULL;
+static EWRAM_DATA u8 curPage = 0;
 
 extern const u32 gSummaryScreen_PageSkills_Tilemap[];
 extern const u32 gSummaryScreen_PageMoves_Tilemap[];
@@ -1236,6 +1237,42 @@ static void Task_InputHandler_Info(u8 taskId)
 
         break;
     }
+
+    if (sMonSummaryScreen->curPageIndex == PSS_PAGE_SKILLS)
+    {
+        if (JOY_NEW(R_BUTTON))
+        {
+            if (curPage < 2)
+                curPage++;
+            else
+                curPage = 0;
+            BufferMonSkills(curPage);
+            FillWindowPixelBuffer(sMonSummaryScreen->windowIds[POKESUM_WIN_RIGHT_PANE], 0);
+            PrintSkillsPage();
+            PutWindowTilemap(sMonSummaryScreen->windowIds[POKESUM_WIN_RIGHT_PANE]);
+            CopyWindowToVram(sMonSummaryScreen->windowIds[POKESUM_WIN_RIGHT_PANE], 2);
+            CopyWindowToVram(sMonSummaryScreen->windowIds[5], 2);
+        }
+        else if (JOY_NEW(L_BUTTON))
+        {
+            if (curPage > 0)
+                curPage--;
+            else
+                curPage = 2;
+
+            BufferMonSkills(curPage);
+            FillWindowPixelBuffer(sMonSummaryScreen->windowIds[POKESUM_WIN_RIGHT_PANE], 0);
+            PrintSkillsPage();
+            PutWindowTilemap(sMonSummaryScreen->windowIds[POKESUM_WIN_RIGHT_PANE]);
+            CopyWindowToVram(sMonSummaryScreen->windowIds[POKESUM_WIN_RIGHT_PANE], 2);
+            CopyWindowToVram(sMonSummaryScreen->windowIds[5], 2);
+        }
+    }
+    else if (sMonSummaryScreen->curPageIndex == PSS_PAGE_INFO || sMonSummaryScreen->curPageIndex == PSS_PAGE_MOVES)
+    {
+        curPage = 0;
+        BufferMonSkills(curPage);
+    }
 }
 
 static void Task_PokeSum_FlipPages(u8 taskId)
@@ -2070,7 +2107,8 @@ static u8 PokeSum_Setup_BufferStrings(void)
         break;
     case 1:
         if (sMonSummaryScreen->isEgg == 0)
-            BufferMonSkills();
+            curPage = 0;
+            BufferMonSkills(curPage);
         break;
     case 2:
         if (sMonSummaryScreen->isEgg == 0)
@@ -2156,7 +2194,7 @@ static void BufferMonInfo(void)
 #define GetNumberRightAlign63(x) (63 - StringLength((x)) * 6)
 #define GetNumberRightAlign27(x) (27 - StringLength((x)) * 6)
 
-static void BufferMonSkills(void)
+static void BufferMonSkills(u8 page)
 {
     u8 tempStr[20];
     u8 level;
@@ -2167,61 +2205,116 @@ static void BufferMonSkills(void)
     u32 exp;
     u32 expToNextLevel;
 
-    hp = GetMonData(&sMonSummaryScreen->currentMon, MON_DATA_HP);
-    ConvertIntToDecimalStringN(sMonSummaryScreen->summary.curHpStrBuf, hp, STR_CONV_MODE_LEFT_ALIGN, 3);
-    StringAppend(sMonSummaryScreen->summary.curHpStrBuf, gText_Slash);
-
-    hp = GetMonData(&sMonSummaryScreen->currentMon, MON_DATA_MAX_HP);
-    ConvertIntToDecimalStringN(tempStr, hp, STR_CONV_MODE_LEFT_ALIGN, 3);
-    StringAppend(sMonSummaryScreen->summary.curHpStrBuf, tempStr);
-
-    sMonSkillsPrinterXpos->curHpStr = GetNumberRightAlign63(sMonSummaryScreen->summary.curHpStrBuf);
-
-    if (sMonSummaryScreen->savedCallback == CB2_ReturnToTradeMenuFromSummary && sMonSummaryScreen->isEnemyParty == TRUE)
+    if (page == 0)
     {
-        statValue = GetMonData(&sMonSummaryScreen->currentMon, MON_DATA_ATK2);
+        hp = GetMonData(&sMonSummaryScreen->currentMon, MON_DATA_HP);
+        ConvertIntToDecimalStringN(sMonSummaryScreen->summary.curHpStrBuf, hp, STR_CONV_MODE_LEFT_ALIGN, 3);
+        StringAppend(sMonSummaryScreen->summary.curHpStrBuf, gText_Slash);
+
+        hp = GetMonData(&sMonSummaryScreen->currentMon, MON_DATA_MAX_HP);
+        ConvertIntToDecimalStringN(tempStr, hp, STR_CONV_MODE_LEFT_ALIGN, 3);
+        StringAppend(sMonSummaryScreen->summary.curHpStrBuf, tempStr);
+
+        sMonSkillsPrinterXpos->curHpStr = GetNumberRightAlign63(sMonSummaryScreen->summary.curHpStrBuf);
+
+        if (sMonSummaryScreen->savedCallback == CB2_ReturnToTradeMenuFromSummary && sMonSummaryScreen->isEnemyParty == TRUE)
+        {
+            statValue = GetMonData(&sMonSummaryScreen->currentMon, MON_DATA_ATK2);
+            ConvertIntToDecimalStringN(sMonSummaryScreen->summary.statValueStrBufs[PSS_STAT_ATK], statValue, STR_CONV_MODE_LEFT_ALIGN, 3);
+            sMonSkillsPrinterXpos->atkStr = GetNumberRightAlign27(sMonSummaryScreen->summary.statValueStrBufs[PSS_STAT_ATK]);
+
+            statValue = GetMonData(&sMonSummaryScreen->currentMon, MON_DATA_DEF2);
+            ConvertIntToDecimalStringN(sMonSummaryScreen->summary.statValueStrBufs[PSS_STAT_DEF], statValue, STR_CONV_MODE_LEFT_ALIGN, 3);
+            sMonSkillsPrinterXpos->defStr = GetNumberRightAlign27(sMonSummaryScreen->summary.statValueStrBufs[PSS_STAT_DEF]);
+
+            statValue = GetMonData(&sMonSummaryScreen->currentMon, MON_DATA_SPATK2);
+            ConvertIntToDecimalStringN(sMonSummaryScreen->summary.statValueStrBufs[PSS_STAT_SPA], statValue, STR_CONV_MODE_LEFT_ALIGN, 3);
+            sMonSkillsPrinterXpos->spAStr = GetNumberRightAlign27(sMonSummaryScreen->summary.statValueStrBufs[PSS_STAT_SPA]);
+
+            statValue = GetMonData(&sMonSummaryScreen->currentMon, MON_DATA_SPDEF2);
+            ConvertIntToDecimalStringN(sMonSummaryScreen->summary.statValueStrBufs[PSS_STAT_SPD], statValue, STR_CONV_MODE_LEFT_ALIGN, 3);
+            sMonSkillsPrinterXpos->spDStr = GetNumberRightAlign27(sMonSummaryScreen->summary.statValueStrBufs[PSS_STAT_SPD]);
+
+            statValue = GetMonData(&sMonSummaryScreen->currentMon, MON_DATA_SPEED2);
+            ConvertIntToDecimalStringN(sMonSummaryScreen->summary.statValueStrBufs[PSS_STAT_SPE], statValue, STR_CONV_MODE_LEFT_ALIGN, 3);
+            sMonSkillsPrinterXpos->speStr = GetNumberRightAlign27(sMonSummaryScreen->summary.statValueStrBufs[PSS_STAT_SPE]);
+        }
+        else
+        {
+            statValue = GetMonData(&sMonSummaryScreen->currentMon, MON_DATA_ATK);
+            ConvertIntToDecimalStringN(sMonSummaryScreen->summary.statValueStrBufs[PSS_STAT_ATK], statValue, STR_CONV_MODE_LEFT_ALIGN, 3);
+            sMonSkillsPrinterXpos->atkStr = GetNumberRightAlign27(sMonSummaryScreen->summary.statValueStrBufs[PSS_STAT_ATK]);
+
+            statValue = GetMonData(&sMonSummaryScreen->currentMon, MON_DATA_DEF);
+            ConvertIntToDecimalStringN(sMonSummaryScreen->summary.statValueStrBufs[PSS_STAT_DEF], statValue, STR_CONV_MODE_LEFT_ALIGN, 3);
+            sMonSkillsPrinterXpos->defStr = GetNumberRightAlign27(sMonSummaryScreen->summary.statValueStrBufs[PSS_STAT_DEF]);
+
+            statValue = GetMonData(&sMonSummaryScreen->currentMon, MON_DATA_SPATK);
+            ConvertIntToDecimalStringN(sMonSummaryScreen->summary.statValueStrBufs[PSS_STAT_SPA], statValue, STR_CONV_MODE_LEFT_ALIGN, 3);
+            sMonSkillsPrinterXpos->spAStr = GetNumberRightAlign27(sMonSummaryScreen->summary.statValueStrBufs[PSS_STAT_SPA]);
+
+            statValue = GetMonData(&sMonSummaryScreen->currentMon, MON_DATA_SPDEF);
+            ConvertIntToDecimalStringN(sMonSummaryScreen->summary.statValueStrBufs[PSS_STAT_SPD], statValue, STR_CONV_MODE_LEFT_ALIGN, 3);
+            sMonSkillsPrinterXpos->spDStr = GetNumberRightAlign27(sMonSummaryScreen->summary.statValueStrBufs[PSS_STAT_SPD]);
+
+            statValue = GetMonData(&sMonSummaryScreen->currentMon, MON_DATA_SPEED);
+            ConvertIntToDecimalStringN(sMonSummaryScreen->summary.statValueStrBufs[PSS_STAT_SPE], statValue, STR_CONV_MODE_LEFT_ALIGN, 3);
+            sMonSkillsPrinterXpos->speStr = GetNumberRightAlign27(sMonSummaryScreen->summary.statValueStrBufs[PSS_STAT_SPE]);
+        }
+    }
+    else if (page == 1)
+    {
+        hp = GetMonData(&sMonSummaryScreen->currentMon, MON_DATA_HP_IV);
+        ConvertIntToDecimalStringN(sMonSummaryScreen->summary.curHpStrBuf, hp, STR_CONV_MODE_LEFT_ALIGN, 3);
+        sMonSkillsPrinterXpos->curHpStr = GetNumberRightAlign63(sMonSummaryScreen->summary.curHpStrBuf);
+
+        statValue = GetMonData(&sMonSummaryScreen->currentMon, MON_DATA_ATK_IV);
         ConvertIntToDecimalStringN(sMonSummaryScreen->summary.statValueStrBufs[PSS_STAT_ATK], statValue, STR_CONV_MODE_LEFT_ALIGN, 3);
         sMonSkillsPrinterXpos->atkStr = GetNumberRightAlign27(sMonSummaryScreen->summary.statValueStrBufs[PSS_STAT_ATK]);
 
-        statValue = GetMonData(&sMonSummaryScreen->currentMon, MON_DATA_DEF2);
+        statValue = GetMonData(&sMonSummaryScreen->currentMon, MON_DATA_DEF_IV);
         ConvertIntToDecimalStringN(sMonSummaryScreen->summary.statValueStrBufs[PSS_STAT_DEF], statValue, STR_CONV_MODE_LEFT_ALIGN, 3);
         sMonSkillsPrinterXpos->defStr = GetNumberRightAlign27(sMonSummaryScreen->summary.statValueStrBufs[PSS_STAT_DEF]);
 
-        statValue = GetMonData(&sMonSummaryScreen->currentMon, MON_DATA_SPATK2);
+        statValue = GetMonData(&sMonSummaryScreen->currentMon, MON_DATA_SPATK_IV);
         ConvertIntToDecimalStringN(sMonSummaryScreen->summary.statValueStrBufs[PSS_STAT_SPA], statValue, STR_CONV_MODE_LEFT_ALIGN, 3);
         sMonSkillsPrinterXpos->spAStr = GetNumberRightAlign27(sMonSummaryScreen->summary.statValueStrBufs[PSS_STAT_SPA]);
 
-        statValue = GetMonData(&sMonSummaryScreen->currentMon, MON_DATA_SPDEF2);
+        statValue = GetMonData(&sMonSummaryScreen->currentMon, MON_DATA_SPDEF_IV);
         ConvertIntToDecimalStringN(sMonSummaryScreen->summary.statValueStrBufs[PSS_STAT_SPD], statValue, STR_CONV_MODE_LEFT_ALIGN, 3);
         sMonSkillsPrinterXpos->spDStr = GetNumberRightAlign27(sMonSummaryScreen->summary.statValueStrBufs[PSS_STAT_SPD]);
 
-        statValue = GetMonData(&sMonSummaryScreen->currentMon, MON_DATA_SPEED2);
+        statValue = GetMonData(&sMonSummaryScreen->currentMon, MON_DATA_SPEED_IV);
         ConvertIntToDecimalStringN(sMonSummaryScreen->summary.statValueStrBufs[PSS_STAT_SPE], statValue, STR_CONV_MODE_LEFT_ALIGN, 3);
         sMonSkillsPrinterXpos->speStr = GetNumberRightAlign27(sMonSummaryScreen->summary.statValueStrBufs[PSS_STAT_SPE]);
     }
-    else
+    else if (page == 2)
     {
-        statValue = GetMonData(&sMonSummaryScreen->currentMon, MON_DATA_ATK);
+        hp = GetMonData(&sMonSummaryScreen->currentMon, MON_DATA_HP_EV);
+        ConvertIntToDecimalStringN(sMonSummaryScreen->summary.curHpStrBuf, hp, STR_CONV_MODE_LEFT_ALIGN, 3);
+        sMonSkillsPrinterXpos->curHpStr = GetNumberRightAlign63(sMonSummaryScreen->summary.curHpStrBuf);
+
+        statValue = GetMonData(&sMonSummaryScreen->currentMon, MON_DATA_ATK_EV);
         ConvertIntToDecimalStringN(sMonSummaryScreen->summary.statValueStrBufs[PSS_STAT_ATK], statValue, STR_CONV_MODE_LEFT_ALIGN, 3);
         sMonSkillsPrinterXpos->atkStr = GetNumberRightAlign27(sMonSummaryScreen->summary.statValueStrBufs[PSS_STAT_ATK]);
 
-        statValue = GetMonData(&sMonSummaryScreen->currentMon, MON_DATA_DEF);
+        statValue = GetMonData(&sMonSummaryScreen->currentMon, MON_DATA_DEF_EV);
         ConvertIntToDecimalStringN(sMonSummaryScreen->summary.statValueStrBufs[PSS_STAT_DEF], statValue, STR_CONV_MODE_LEFT_ALIGN, 3);
         sMonSkillsPrinterXpos->defStr = GetNumberRightAlign27(sMonSummaryScreen->summary.statValueStrBufs[PSS_STAT_DEF]);
 
-        statValue = GetMonData(&sMonSummaryScreen->currentMon, MON_DATA_SPATK);
+        statValue = GetMonData(&sMonSummaryScreen->currentMon, MON_DATA_SPATK_EV);
         ConvertIntToDecimalStringN(sMonSummaryScreen->summary.statValueStrBufs[PSS_STAT_SPA], statValue, STR_CONV_MODE_LEFT_ALIGN, 3);
         sMonSkillsPrinterXpos->spAStr = GetNumberRightAlign27(sMonSummaryScreen->summary.statValueStrBufs[PSS_STAT_SPA]);
 
-        statValue = GetMonData(&sMonSummaryScreen->currentMon, MON_DATA_SPDEF);
+        statValue = GetMonData(&sMonSummaryScreen->currentMon, MON_DATA_SPDEF_EV);
         ConvertIntToDecimalStringN(sMonSummaryScreen->summary.statValueStrBufs[PSS_STAT_SPD], statValue, STR_CONV_MODE_LEFT_ALIGN, 3);
         sMonSkillsPrinterXpos->spDStr = GetNumberRightAlign27(sMonSummaryScreen->summary.statValueStrBufs[PSS_STAT_SPD]);
 
-        statValue = GetMonData(&sMonSummaryScreen->currentMon, MON_DATA_SPEED);
+        statValue = GetMonData(&sMonSummaryScreen->currentMon, MON_DATA_SPEED_EV);
         ConvertIntToDecimalStringN(sMonSummaryScreen->summary.statValueStrBufs[PSS_STAT_SPE], statValue, STR_CONV_MODE_LEFT_ALIGN, 3);
         sMonSkillsPrinterXpos->speStr = GetNumberRightAlign27(sMonSummaryScreen->summary.statValueStrBufs[PSS_STAT_SPE]);
     }
-
+    
     exp = GetMonData(&sMonSummaryScreen->currentMon, MON_DATA_EXP);
     ConvertIntToDecimalStringN(sMonSummaryScreen->summary.expPointsStrBuf, exp, STR_CONV_MODE_LEFT_ALIGN, 7);
     sMonSkillsPrinterXpos->expStr = GetNumberRightAlign63(sMonSummaryScreen->summary.expPointsStrBuf);
@@ -2526,103 +2619,106 @@ static void PrintSkillsPage(void)
     memcpy(spDefenseTextColor, sLevelNickTextColors[0], sizeof(spDefenseTextColor));
     memcpy(speedTextColor, sLevelNickTextColors[0], sizeof(speedTextColor));
 
+    if (curPage == 0)
+    {
     switch(nature)
     {
-    case 0: // Hardy - Neutral
-        // No color changes for "Neutral" nature.
-        break;
-    case 1: // Lonely - +Attack / -Defense
-        memcpy(attackTextColor, statBoostTextColor, sizeof(attackTextColor));
-        memcpy(defenseTextColor, statDropTextColor, sizeof(defenseTextColor));
-        break;
-    case 2: // Brave - +Attack / -Speed
-        memcpy(attackTextColor, statBoostTextColor, sizeof(attackTextColor));
-        memcpy(speedTextColor, statDropTextColor, sizeof(speedTextColor));
-        break;
-    case 3: // Adamant - +Attack / -SpAttack
-        memcpy(attackTextColor, statBoostTextColor, sizeof(attackTextColor));
-        memcpy(spAttackTextColor, statDropTextColor, sizeof(spAttackTextColor));
-        break;
-    case 4: // Naughty - +Attack / -SpDefense
-        memcpy(attackTextColor, statBoostTextColor, sizeof(attackTextColor));
-        memcpy(spDefenseTextColor, statDropTextColor, sizeof(spDefenseTextColor));
-        break;
-    case 5: // Bold - +Defense / -Attack
-        memcpy(defenseTextColor, statBoostTextColor, sizeof(defenseTextColor));
-        memcpy(attackTextColor, statDropTextColor, sizeof(attackTextColor));
-        break;
-    case 6: // Docile - Neutral
-        // No color changes for "Neutral" nature.
-        break;
-    case 7: // Relaxed - +Defense / -Speed
-        memcpy(defenseTextColor, statBoostTextColor, sizeof(defenseTextColor));
-        memcpy(speedTextColor, statDropTextColor, sizeof(speedTextColor));
-        break;
-    case 8: // Impish - +Defense / -SpAttack
-        memcpy(defenseTextColor, statBoostTextColor, sizeof(defenseTextColor));
-        memcpy(spAttackTextColor, statDropTextColor, sizeof(spAttackTextColor));
-        break;
-    case 9: // Lax - +Defense / -SpDefense
-        memcpy(defenseTextColor, statBoostTextColor, sizeof(defenseTextColor));
-        memcpy(spDefenseTextColor, statDropTextColor, sizeof(spDefenseTextColor));
-        break;
-    case 10: // Timid - +Speed / -Attack
-        memcpy(speedTextColor, statBoostTextColor, sizeof(speedTextColor));
-        memcpy(attackTextColor, statDropTextColor, sizeof(attackTextColor));
-        break;
-    case 11: // Hasty - +Speed / -Defense
-        memcpy(speedTextColor, statBoostTextColor, sizeof(speedTextColor));
-        memcpy(defenseTextColor, statDropTextColor, sizeof(defenseTextColor));
-        break;
-    case 12: // Serious - Neutral
-        // No color changes for "Neutral" nature.
-        break;
-    case 13: // Jolly - +Speed / -SpAttack
-        memcpy(speedTextColor, statBoostTextColor, sizeof(speedTextColor));
-        memcpy(spAttackTextColor, statDropTextColor, sizeof(spAttackTextColor));
-        break;
-    case 14: // Naive - +Speed / -SpDefense
-        memcpy(speedTextColor, statBoostTextColor, sizeof(speedTextColor));
-        memcpy(spDefenseTextColor, statDropTextColor, sizeof(spDefenseTextColor));
-        break;
-    case 15: // Modest - +SpAttack / -Attack
-        memcpy(spAttackTextColor, statBoostTextColor, sizeof(spAttackTextColor));
-        memcpy(attackTextColor, statDropTextColor, sizeof(attackTextColor));
-        break;
-    case 16: // Mild - +SpAttack / -Defense
-        memcpy(spAttackTextColor, statBoostTextColor, sizeof(spAttackTextColor));
-        memcpy(defenseTextColor, statDropTextColor, sizeof(defenseTextColor));
-        break;
-    case 17: // Quiet - +SpAttack / -Speed
-        memcpy(spAttackTextColor, statBoostTextColor, sizeof(spAttackTextColor));
-        memcpy(speedTextColor, statDropTextColor, sizeof(speedTextColor));
-        break;
-    case 18: // Bashful - Neutral
-        // No color changes for "Neutral" nature.
-        break;
-    case 19: // Rash - +SpAttack / -SpDefense
-        memcpy(spAttackTextColor, statBoostTextColor, sizeof(spAttackTextColor));
-        memcpy(spDefenseTextColor, statDropTextColor, sizeof(spDefenseTextColor));
-        break;
-    case 20: // Calm - +SpDefense / -Attack
-        memcpy(spDefenseTextColor, statBoostTextColor, sizeof(spDefenseTextColor));
-        memcpy(attackTextColor, statDropTextColor, sizeof(attackTextColor));
-    break;
-    case 21: // Gentle - +SpDefense / -Defense
-        memcpy(spDefenseTextColor, statBoostTextColor, sizeof(spDefenseTextColor));
-        memcpy(defenseTextColor, statDropTextColor, sizeof(defenseTextColor));
-        break;
-    case 22: // Sassy - +SpDefense / -Speed
-        memcpy(spDefenseTextColor, statBoostTextColor, sizeof(spDefenseTextColor));
-        memcpy(speedTextColor, statDropTextColor, sizeof(speedTextColor));
-        break;
-    case 23: // Careful - +SpDefense / -SpAttack
-        memcpy(spDefenseTextColor, statBoostTextColor, sizeof(spDefenseTextColor));
-        memcpy(spAttackTextColor, statDropTextColor, sizeof(spAttackTextColor));
-        break;
-    case 24: // Quirky - Neutral
-        // No color changes for "Neutral" nature.
-        break;
+        case 0: // Hardy - Neutral
+            // No color changes for "Neutral" nature.
+            break;
+        case 1: // Lonely - +Attack / -Defense
+            memcpy(attackTextColor, statBoostTextColor, sizeof(attackTextColor));
+            memcpy(defenseTextColor, statDropTextColor, sizeof(defenseTextColor));
+            break;
+        case 2: // Brave - +Attack / -Speed
+            memcpy(attackTextColor, statBoostTextColor, sizeof(attackTextColor));
+            memcpy(speedTextColor, statDropTextColor, sizeof(speedTextColor));
+            break;
+        case 3: // Adamant - +Attack / -SpAttack
+            memcpy(attackTextColor, statBoostTextColor, sizeof(attackTextColor));
+            memcpy(spAttackTextColor, statDropTextColor, sizeof(spAttackTextColor));
+            break;
+        case 4: // Naughty - +Attack / -SpDefense
+            memcpy(attackTextColor, statBoostTextColor, sizeof(attackTextColor));
+            memcpy(spDefenseTextColor, statDropTextColor, sizeof(spDefenseTextColor));
+            break;
+        case 5: // Bold - +Defense / -Attack
+            memcpy(defenseTextColor, statBoostTextColor, sizeof(defenseTextColor));
+            memcpy(attackTextColor, statDropTextColor, sizeof(attackTextColor));
+            break;
+        case 6: // Docile - Neutral
+            // No color changes for "Neutral" nature.
+            break;
+        case 7: // Relaxed - +Defense / -Speed
+            memcpy(defenseTextColor, statBoostTextColor, sizeof(defenseTextColor));
+            memcpy(speedTextColor, statDropTextColor, sizeof(speedTextColor));
+            break;
+        case 8: // Impish - +Defense / -SpAttack
+            memcpy(defenseTextColor, statBoostTextColor, sizeof(defenseTextColor));
+            memcpy(spAttackTextColor, statDropTextColor, sizeof(spAttackTextColor));
+            break;
+        case 9: // Lax - +Defense / -SpDefense
+            memcpy(defenseTextColor, statBoostTextColor, sizeof(defenseTextColor));
+            memcpy(spDefenseTextColor, statDropTextColor, sizeof(spDefenseTextColor));
+            break;
+        case 10: // Timid - +Speed / -Attack
+            memcpy(speedTextColor, statBoostTextColor, sizeof(speedTextColor));
+            memcpy(attackTextColor, statDropTextColor, sizeof(attackTextColor));
+            break;
+        case 11: // Hasty - +Speed / -Defense
+            memcpy(speedTextColor, statBoostTextColor, sizeof(speedTextColor));
+            memcpy(defenseTextColor, statDropTextColor, sizeof(defenseTextColor));
+            break;
+        case 12: // Serious - Neutral
+            // No color changes for "Neutral" nature.
+            break;
+        case 13: // Jolly - +Speed / -SpAttack
+            memcpy(speedTextColor, statBoostTextColor, sizeof(speedTextColor));
+            memcpy(spAttackTextColor, statDropTextColor, sizeof(spAttackTextColor));
+            break;
+        case 14: // Naive - +Speed / -SpDefense
+            memcpy(speedTextColor, statBoostTextColor, sizeof(speedTextColor));
+            memcpy(spDefenseTextColor, statDropTextColor, sizeof(spDefenseTextColor));
+            break;
+        case 15: // Modest - +SpAttack / -Attack
+            memcpy(spAttackTextColor, statBoostTextColor, sizeof(spAttackTextColor));
+            memcpy(attackTextColor, statDropTextColor, sizeof(attackTextColor));
+            break;
+        case 16: // Mild - +SpAttack / -Defense
+            memcpy(spAttackTextColor, statBoostTextColor, sizeof(spAttackTextColor));
+            memcpy(defenseTextColor, statDropTextColor, sizeof(defenseTextColor));
+            break;
+        case 17: // Quiet - +SpAttack / -Speed
+            memcpy(spAttackTextColor, statBoostTextColor, sizeof(spAttackTextColor));
+            memcpy(speedTextColor, statDropTextColor, sizeof(speedTextColor));
+            break;
+        case 18: // Bashful - Neutral
+            // No color changes for "Neutral" nature.
+            break;
+        case 19: // Rash - +SpAttack / -SpDefense
+            memcpy(spAttackTextColor, statBoostTextColor, sizeof(spAttackTextColor));
+            memcpy(spDefenseTextColor, statDropTextColor, sizeof(spDefenseTextColor));
+            break;
+        case 20: // Calm - +SpDefense / -Attack
+            memcpy(spDefenseTextColor, statBoostTextColor, sizeof(spDefenseTextColor));
+            memcpy(attackTextColor, statDropTextColor, sizeof(attackTextColor));
+            break;
+        case 21: // Gentle - +SpDefense / -Defense
+            memcpy(spDefenseTextColor, statBoostTextColor, sizeof(spDefenseTextColor));
+            memcpy(defenseTextColor, statDropTextColor, sizeof(defenseTextColor));
+            break;
+        case 22: // Sassy - +SpDefense / -Speed
+            memcpy(spDefenseTextColor, statBoostTextColor, sizeof(spDefenseTextColor));
+            memcpy(speedTextColor, statDropTextColor, sizeof(speedTextColor));
+            break;
+        case 23: // Careful - +SpDefense / -SpAttack
+            memcpy(spDefenseTextColor, statBoostTextColor, sizeof(spDefenseTextColor));
+            memcpy(spAttackTextColor, statDropTextColor, sizeof(spAttackTextColor));
+            break;
+        case 24: // Quirky - Neutral
+            // No color changes for "Neutral" nature.
+            break;
+        }
     }
 
 
@@ -5239,7 +5335,7 @@ static void Task_PokeSum_SwitchDisplayedPokemon(u8 taskId)
         break;
     case 6:
         if (!sMonSummaryScreen->isEgg)
-            BufferMonSkills();
+            BufferMonSkills(curPage);
 
         sMonSummaryScreen->switchMonTaskState++;
         break;
