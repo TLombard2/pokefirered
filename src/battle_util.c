@@ -2489,6 +2489,17 @@ u8 ItemBattleEffects(u8 caseID, u8 battlerId, bool8 moveTurn)
     u8 battlerHoldEffect, atkHoldEffect, defHoldEffect;
     u8 battlerHoldEffectParam, atkHoldEffectParam, defHoldEffectParam;
     u16 atkItem, defItem;
+    u8 speciesAtk;
+    u8 pidAtk;
+    u8 speciesDef;
+    u8 pidDef;
+
+    // Used for destiny knot checks
+    speciesAtk = GetMonData(gBattleMons[gBattlerAttacker], MON_DATA_SPECIES);
+    pidAtk = GetMonData(gBattleMons[gBattlerAttacker], MON_DATA_PERSONALITY);
+
+    speciesDef = GetMonData(gBattleMons[battlerId], MON_DATA_SPECIES);
+    pidDef = GetMonData(gBattleMons[battlerId], MON_DATA_PERSONALITY);
 
     gLastUsedItem = gBattleMons[battlerId].item;
     if (gLastUsedItem == ITEM_ENIGMA_BERRY)
@@ -2826,6 +2837,21 @@ u8 ItemBattleEffects(u8 caseID, u8 battlerId, bool8 moveTurn)
                     effect = ITEM_EFFECT_OTHER;
                 }
                 break;
+            case HOLD_EFFECT_DESTINY_KNOT:
+                if (gBattleMons[battlerId].status2 & STATUS2_INFATUATION
+                && gBattleMons[gBattlerAttacker].hp != 0
+                && gBattleMons[gBattlerTarget].hp != 0
+                && !gProtectStructs[gBattlerAttacker].confusionSelfDmg
+                && gBattleMons[gBattlerAttacker].ability != ABILITY_OBLIVIOUS
+                && !(gBattleMons[gBattlerAttacker].status2 & STATUS2_INFATUATION)
+                && GetGenderFromSpeciesAndPersonality(speciesAtk, pidAtk) != MON_GENDERLESS
+                && GetGenderFromSpeciesAndPersonality(speciesDef, pidDef) != MON_GENDERLESS)
+                {
+                    gBattleMons[gBattlerTarget].status2 |= STATUS2_INFATUATED_WITH(gBattlerAttacker);
+                    BattleScriptPushCursor();
+                    gBattlescriptCurrInstr = BattleScript_DestinyKnotActivates;
+                }
+
             }
             if (effect != 0)
             {

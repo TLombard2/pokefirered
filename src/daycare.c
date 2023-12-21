@@ -791,10 +791,93 @@ static void RemoveIVIndexFromList(u8 *ivs, u8 selectedIv)
 static void InheritIVs(struct Pokemon *egg, struct DayCare *daycare)
 {
     u8 i;
-    u8 selectedIvs[INHERITED_IV_COUNT];
+    u8 ivCount;
+    u8* selectedIvs;
+    u8 motherPowerStat = NUM_STATS;
+    u8 fatherPowerStat = NUM_STATS;
+    u8 powerStat = NUM_STATS;
+    u8 parentChosen;
+
+    // Power Item check - Mother is 0
+    switch(GetBoxMonData(&daycare->mons[0].mon, MON_DATA_HELD_ITEM))
+    {
+        case ITEM_POWER_ANKLET:
+            motherPowerStat = STAT_SPEED;
+            break;
+        case ITEM_POWER_BAND:
+            motherPowerStat = STAT_SPDEF;
+            break;
+        case ITEM_POWER_BELT:
+            motherPowerStat = STAT_DEF;
+            break;
+        case ITEM_POWER_BRACER:
+            motherPowerStat = STAT_ATK;
+            break;
+        case ITEM_POWER_LENS:
+            motherPowerStat = STAT_SPATK;
+            break;
+        case ITEM_POWER_WEIGHT:
+            motherPowerStat = STAT_HP;
+            break;
+    }
+    // Power Item check - Father is 1
+    switch(GetBoxMonData(&daycare->mons[1].mon, MON_DATA_HELD_ITEM))
+    {
+        case ITEM_POWER_ANKLET:
+            fatherPowerStat = STAT_SPEED;
+            break;
+        case ITEM_POWER_BAND:
+            fatherPowerStat = STAT_SPDEF;
+            break;
+        case ITEM_POWER_BELT:
+            fatherPowerStat = STAT_DEF;
+            break;
+        case ITEM_POWER_BRACER:
+            fatherPowerStat = STAT_ATK;
+            break;
+        case ITEM_POWER_LENS:
+            fatherPowerStat = STAT_SPATK;
+            break;
+        case ITEM_POWER_WEIGHT:
+            fatherPowerStat = STAT_HP;
+            break;
+    }
+
+    // If both parents hold power items randomly choose one
+    if (motherPowerStat < NUM_STATS && fatherPowerStat < NUM_STATS)
+    {
+        u8 pickNum = Random() % 1;
+        if (pickNum == 0)
+        {
+            powerStat = motherPowerStat;
+            parentChosen = 0;
+        }
+        else
+        {
+            powerStat = fatherPowerStat;
+            parentChosen = 1;
+        }
+    }
+    else if (motherPowerStat < NUM_STATS)
+    {
+        powerStat = motherPowerStat;
+        parentChosen = 0;
+    }
+    else if (fatherPowerStat < NUM_STATS)
+    {
+        powerStat = motherPowerStat;
+        parentChosen = 1;
+    }
+
+    // Destiny Knot check
+    if (GetBoxMonData(&daycare->mons[0].mon, MON_DATA_HELD_ITEM) == ITEM_DESTINY_KNOT || GetBoxMonData(&daycare->mons[0].mon, MON_DATA_HELD_ITEM) == ITEM_DESTINY_KNOT)
+        ivCount = MAX_INHERITED_IV_COUNT;
+    else
+        ivCount = INHERITED_IV_COUNT;
+
     u8 availableIVs[NUM_STATS];
     u8 whichParent[NELEMS(selectedIvs)];
-    u8 iv;
+    u8 iv;    
 
     // Initialize a list of IV indices.
     for (i = 0; i < NUM_STATS; i++)
@@ -802,7 +885,54 @@ static void InheritIVs(struct Pokemon *egg, struct DayCare *daycare)
         availableIVs[i] = i;
     }
 
-    // Select the 3 IVs that will be inherited.
+    // Remove power item IV from possible random inheritance
+    if (powerStat < NUM_STATS)
+    {
+        if (motherPowerStat < NUM_STATS && fatherPowerStat < NUM_STATS) // If both parents are holding power items both IVs are removed from the pool even though only one is chosen
+        {
+            RemoveIVIndexFromList(availableIVs, motherPowerStat);
+            RemoveIVIndexFromList(availableIVs, fatherPowerStat);
+            ivCount-=2;
+        }
+        else
+        {
+            RemoveIVIndexFromList(availableIVs, powerStat);
+            ivCount--;
+        }
+    }
+
+    // Set inherited IV from parent with power item
+    switch(powerStat)
+    {
+        case 0:
+            iv = GetBoxMonData(&daycare->mons[parentChosen].mon, MON_DATA_HP_IV);
+            SetMonData(egg, MON_DATA_HP_IV, &iv);
+            break;
+        case 1:
+            iv = GetBoxMonData(&daycare->mons[parentChosen].mon, MON_DATA_ATK_IV);
+            SetMonData(egg, MON_DATA_ATK_IV, &iv);
+            break;
+        case 2:
+            iv = GetBoxMonData(&daycare->mons[parentChosen].mon, MON_DATA_DEF_IV);
+            SetMonData(egg, MON_DATA_DEF_IV, &iv);
+            break;
+        case 3:
+            iv = GetBoxMonData(&daycare->mons[parentChosen].mon, MON_DATA_SPEED_IV);
+            SetMonData(egg, MON_DATA_SPEED_IV, &iv);
+            break;
+        case 4:
+            iv = GetBoxMonData(&daycare->mons[parentChosen].mon, MON_DATA_SPATK_IV);
+            SetMonData(egg, MON_DATA_SPATK_IV, &iv);
+            break;
+        case 5:
+            iv = GetBoxMonData(&daycare->mons[parentChosen].mon, MON_DATA_SPDEF_IV);
+            SetMonData(egg, MON_DATA_SPDEF_IV, &iv);
+            break;  
+    }
+
+    selectedIvs = (u8*)malloc(ivCount * sizeof(u8));
+
+    // Select the IVs that will be inherited.
     for (i = 0; i < NELEMS(selectedIvs); i++)
     {
         // Randomly pick an IV from the available list and stop from being chosen again.
@@ -846,6 +976,7 @@ static void InheritIVs(struct Pokemon *egg, struct DayCare *daycare)
                 SetMonData(egg, MON_DATA_SPDEF_IV, &iv);
                 break;
         }
+        free(selectedIvs);
     }
 }
 

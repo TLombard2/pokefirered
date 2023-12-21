@@ -5565,6 +5565,27 @@ void MonGainEVs(struct Pokemon *mon, u16 defeatedSpecies)
 
         if (holdEffect == HOLD_EFFECT_MACHO_BRACE)
             evIncrease *= 2;
+        // Power Items
+        if (holdEffect == HOLD_EFFECT_POWER_ANKLET && i == STAT_SPEED)
+            evIncrease += 8 * multiplier;
+
+        if (holdEffect == HOLD_EFFECT_POWER_BAND && i == STAT_SPDEF)
+            evIncrease += 8 * multiplier;
+
+        if (holdEffect == HOLD_EFFECT_POWER_BELT && i == STAT_DEF)
+            evIncrease += 8 * multiplier;
+
+        if (holdEffect == HOLD_EFFECT_POWER_BRACER && i == STAT_ATK)
+            evIncrease += 8 * multiplier;
+        
+        if (holdEffect == HOLD_EFFECT_POWER_LENS && i == STAT_SPATK)
+            evIncrease += 8 * multiplier;
+
+        if (holdEffect == HOLD_EFFECT_POWER_WEIGHT && i == STAT_HP)
+            evIncrease += 8 * multiplier;
+        
+
+
 
         if (totalEVs + (s16)evIncrease > MAX_TOTAL_EVS)
             evIncrease = ((s16)evIncrease + MAX_TOTAL_EVS) - (totalEVs + evIncrease);
