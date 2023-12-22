@@ -71,6 +71,7 @@ static void EggHatchPrintMessage(u8 windowId, u8 *string, u8 x, u8 y, u8 speed);
 static void CreateRandomEggShardSprite(void);
 static void CreateEggShardSprite(u8 x, u8 y, s16 data1, s16 data2, s16 data3, u8 spriteAnimIndex);
 static u8 GetNatureFromPersonality(u32 personality);
+static u16 InheritPokeball(struct DayCare *daycare);
 
 // IWRAM bss
 static struct EggHatchData *sEggHatchData;
@@ -1077,7 +1078,7 @@ static void BuildEggMoveset(struct Pokemon *egg, struct BoxPokemon *father, stru
             break;
         }
     }
-    
+
     for (i = 0; i < MAX_MON_MOVES; i++)
     {
         if (sHatchedEggFatherMoves[i] == MOVE_NONE)
@@ -1216,6 +1217,7 @@ static void _GiveEggFromDaycare(struct DayCare *daycare)
     RemoveEggFromDayCare(daycare);
 }
 
+// Used for gifted eggs
 void CreateEgg(struct Pokemon *mon, u16 species, bool8 setHotSpringsLocation)
 {
     u8 metLevel;
@@ -1243,6 +1245,7 @@ void CreateEgg(struct Pokemon *mon, u16 species, bool8 setHotSpringsLocation)
     SetMonData(mon, MON_DATA_IS_EGG, &isEgg);
 }
 
+// Used in breeding eggs
 static void SetInitialEggData(struct Pokemon *mon, u16 species, struct DayCare *daycare)
 {
     u32 personality;
@@ -1253,13 +1256,64 @@ static void SetInitialEggData(struct Pokemon *mon, u16 species, struct DayCare *
     personality = daycare->offspringPersonality | (Random() << 16);
     CreateMon(mon, species, EGG_HATCH_LEVEL, USE_RANDOM_IVS, TRUE, personality, OT_ID_PLAYER_ID, 0);
     metLevel = 0;
-    ball = ITEM_POKE_BALL;
+    ball = InheritPokeball(daycare);
     language = LANGUAGE_JAPANESE;
     SetMonData(mon, MON_DATA_POKEBALL, &ball);
     SetMonData(mon, MON_DATA_NICKNAME, sJapaneseEggNickname);
     SetMonData(mon, MON_DATA_FRIENDSHIP, &gSpeciesInfo[species].eggCycles);
     SetMonData(mon, MON_DATA_MET_LEVEL, &metLevel);
     SetMonData(mon, MON_DATA_LANGUAGE, &language);
+}
+
+static u16 InheritPokeball(struct DayCare *daycare)
+{
+    s32 i;
+    u16 fatherBall;
+    u16 motherBall;
+    u16 ball = ITEM_POKE_BALL;
+    u8 dittoCount = 0;
+
+    // Ditto check
+    for (i = 0; i < DAYCARE_MON_COUNT; i++)
+    {
+        if (GetBoxMonData(&daycare->mons[i].mon, MON_DATA_SPECIES) == SPECIES_DITTO)
+            dittoCount++;
+    }
+
+    // Set ball if a parent is Ditto
+    if (dittoCount > 0)
+    {
+        for (i = 0; i < DAYCARE_MON_COUNT; i++)
+        {
+            if (GetBoxMonData(&daycare->mons[i].mon, MON_DATA_SPECIES) != SPECIES_DITTO)
+                ball = GetBoxMonData(&daycare->mons[i].mon, MON_DATA_POKEBALL);
+        }
+    }
+    // Set ball if parents are same species
+    else if (GetBoxMonData(&daycare->mons[0].mon, MON_DATA_SPECIES) == GetBoxMonData(&daycare->mons[1].mon, MON_DATA_SPECIES))
+    {
+        for (i = 0; i < DAYCARE_MON_COUNT; i++)
+        {
+            if (GetBoxMonGender(&daycare->mons[i].mon) == MON_FEMALE)
+                motherBall = GetBoxMonData(&daycare->mons[i].mon, MON_DATA_POKEBALL);
+            else if (GetBoxMonGender(&daycare->mons[i].mon) == MON_MALE)
+                fatherBall = GetBoxMonData(&daycare->mons[i].mon, MON_DATA_POKEBALL);
+        }
+        if (Random() >= USHRT_MAX / 2) // coin flip
+            ball = motherBall;
+        else
+            ball = fatherBall;
+    }
+    // Set ball if parents are different species
+    else if (GetBoxMonData(&daycare->mons[0].mon, MON_DATA_SPECIES) != GetBoxMonData(&daycare->mons[1].mon, MON_DATA_SPECIES))
+    {
+        for (i = 0; i < DAYCARE_MON_COUNT; i++)
+        {
+            if (GetBoxMonGender(&daycare->mons[i].mon) == MON_FEMALE)
+                ball = GetBoxMonData(&daycare->mons[i].mon, MON_DATA_POKEBALL);
+        }
+    }
+    return ball;
 }
 
 void GiveEggFromDaycare(void)
