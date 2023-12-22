@@ -1313,6 +1313,10 @@ static u16 InheritPokeball(struct DayCare *daycare)
                 ball = GetBoxMonData(&daycare->mons[i].mon, MON_DATA_POKEBALL);
         }
     }
+    // Master balls can't be inherited
+    if (ball == ITEM_MASTER_BALL)
+        ball = ITEM_POKE_BALL;
+        
     return ball;
 }
 
