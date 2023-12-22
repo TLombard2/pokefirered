@@ -20,5 +20,14 @@ CHANGELOG
 - Player can change direction while moving vertically and horizontally (Previously you could only change direction while moving horizontally)
 - Removed access to the Help System Menu (Allows use of R & L Buttons for other things)
 - Pokemon summary page can now show IVs & EVs by pressing the R or L Button while on the stats page
+- Destiny Knot added to the game
+- Power Items added to the game (+8 EVs)
+- Everstone has a 100% chance to pass down natures
+- Tms & Hms are no longer inherited moves
+- Both parents can now pass down egg moves (Mother's egg moves have priority)
+- Pokeballs are now passed down according to Gen 7+ rules
+  - Ditto + any parent = non ditto's ball
+  - Same species parents = 50/50
+  - Different species parents = Female's ball
 
 Source: [pret.github.io](https://pret.github.io/).
